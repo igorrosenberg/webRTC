@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <title>Web RTC</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <style>
+        video {
+            display: none;
+        }
+
+        #vid-out {
+            width: 100px;
+            height: 100px;
+        }
+
+        #vid-in {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>STUDENT</h1>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="col-sm-12" id="waitingRoom">
+                <img src="images/spinner.gif">
+                <div id="messages"></div>
+            </div>
+        </div>
+    </div>
+
+    <video id="vid-out" controls></video>
+    <video id="vid-in" controls></video>
+
+</body>
+
+<script src="simplepeer.min.js"></script>
+<script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.27.4.min.js"></script>
+<script src="pubNubWrapper.js"></script>
+<script>
+
+    const teacherIn = 'TEACHER IN'
+    const studentIn = 'STUDENT IN'
+    const messagesTop = document.getElementById('messages')
+
+    // look for the teacher
+    let displayMessage = function (message) {
+        let pmessage = document.createElement('p')
+        pmessage.appendChild(document.createTextNode(message))
+        messagesTop.append(pmessage)
+        if (message.length < 100)
+            console.log(message)
+        else
+            console.log(message.substring(0,99) + '...')
+    }
+
+    // Configure Comms
+    function koCallBack(error) {
+        displayMessage('[ERROR] ' + error)
+    }
+
+    function onMessageCallback(a, b) {
+        displayMessage('[MESSAGE received] ' + a + ': ' + b)
+        if (a == 'teacher') {
+            startStudentClass(b)
+        }
+
+    }
+
+    const myComms = PubNubWrapper('1', 'student', onMessageCallback, koCallBack)
+
+    myComms.send(studentIn)
+
+</script>
+<script>
+    // https://www.grafikart.fr/tutoriels/webrtc-864
+    // https://github.com/feross/simple-peer
+
+
+    function bindEvents(p, teacherData) {
+
+
+        function error(error) {
+            console.log(error)
+        }
+
+        function linkConfig(data) {
+            const dataJson = JSON.stringify(data)
+            console.log("Sending back the student dataJson")
+            // JSON sent to the other party
+            myComms.send(dataJson)
+        }
+
+        let streamToVideoElement = function () {
+            return function (stream) {
+                let $video = document.getElementById('vid-in');
+                $video.srcObject = stream;
+                $video.onloadedmetadata = function (e) {
+                    $video.style.display = 'block'
+                    $video.play();
+                }
+            }
+        }
+
+        p.on('error', error)
+        p.on('signal', linkConfig)
+        p.on('stream', streamToVideoElement())
+
+        console.log("Events bound, form activated")
+
+        // use the teacherData for the incoming stream
+        let friendDataX = JSON.parse(teacherData)
+        p.signal(friendDataX)
+    }
+
+    function start(isInitiator, teacherData) {
+
+        function couldStartVideo(mediaStream) {
+
+            let p = new SimplePeer({
+                initiator: isInitiator,
+                stream: mediaStream,
+                trickle: false,
+                // config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }] }
+            })
+            bindEvents(p, teacherData)
+
+            let $video = document.getElementById('vid-out');
+            $video.srcObject = mediaStream;
+            $video.onloadedmetadata = function (e) {
+                // hide waitingRoom ... somehow when OK
+                document.getElementById('waitingRoom').style.display = 'none'
+
+                // show self video
+                $video.style.display = 'block'
+                $video.play();
+            }
+        }
+
+        function failStartVideo(err) {
+            console.log(err.name + ": " + err.message);
+        }
+
+        let constraints = {audio: false, video: true};
+        navigator.mediaDevices.getUserMedia(constraints).then(couldStartVideo).catch(failStartVideo)
+
+        console.log("Started self-video on out", isInitiator)
+
+    }
+
+
+    function startStudentClass(teacherData) {
+        start(false, teacherData)
+    }
+
+</script>
+</html>
