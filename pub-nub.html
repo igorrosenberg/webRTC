@@ -15,6 +15,7 @@
 </body>
 
 <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.27.4.min.js"></script>
+<script src="pubNubWrapper.js"></script>
 
 <script>
 
@@ -38,58 +39,14 @@
         displayMessage('[MESSAGE: received] ' + a + ': ' + b)
     }
 
-    var myComms = COMMS(onMessageCallback, koCallBack)
+    const myComms = PubNubWrapper('1', '2', onMessageCallback, koCallBack)
 
     // Gui Behavior
 
-    sendButton.addEventListener('click', function(e) {
+    sendButton.addEventListener('click', function (e) {
         myComms.send(updateText.value)
         updateText.value = ""
     })
 
-    /////////////
-
-    // An object with only one function : send(String)
-    function COMMS(onMessageCallback, koCallBack) {
-        const pub_key = 'pub-c-f338e71f-c02f-406c-ae18-1808f11f05b2'
-        const sub_key = 'sub-c-17d18004-7cd4-11ea-9770-0a12e0cf0d6e'
-
-
-        const clientUUID = PubNub.generateUUID()
-        const theChannel = 'the_guide'
-        const subChannel = 'subChannel'
-
-        const pubnub = new PubNub({
-            publishKey: pub_key,
-            subscribeKey: sub_key,
-            uuid: clientUUID
-        })
-
-        pubnub.addListener({
-            message: function (event) {
-                onMessageCallback(event.message.entry, event.message.update)
-            }
-        })
-
-        pubnub.subscribe({
-            channels: [theChannel],
-            withPresence: true
-        })
-
-        return {
-            send: function (anUpdate) {
-                const anEntry = subChannel
-                pubnub.publish({
-                        channel: theChannel,
-                        message: {'entry': anEntry, 'update': anUpdate}
-                    },
-                    function (status, response) {
-                        if (status.error) {
-                            koCallBack(status)
-                        }
-                    })
-            }
-        }
-    }
 </script>
 </html>
