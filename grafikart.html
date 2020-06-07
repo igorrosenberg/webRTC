@@ -6,50 +6,61 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
           integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 
     <style>
+        #vid-out {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 200px;
+            width: 200px;
+        }
     </style>
 </head>
 <body>
 
-<p>References :</p>
-<ul>
-    <li>https://github.com/feross/simple-peer</li>
-    <li>https://www.grafikart.fr/tutoriels/webrtc-864</li>
-</ul>
-
-
 <div class="container">
-    <div class="row">
-        <div class="col-sm-6">
-            IN
-            <video id="vid-in" controls width="100%" height="300px"></video>
-            <textarea id='offer' class="form-control"></textarea>
-            <p>
-                <button id="start" class="btn btn-primary">Start</button>
-            </p>
+
+    <div class="row" id="help">
+        <p>Web RTC demo. References :</p>
+        <ul>
+            <li>https://github.com/feross/simple-peer</li>
+            <li>https://www.grafikart.fr/tutoriels/webrtc-864</li>
+        </ul>
+
+        <p>
+            <button id="start" class="btn btn-primary">Start</button>
+        </p>
+    </div>
+
+    <div style="display: none" id="main">
+        <div class="row">
+            <div class="col-sm-6">
+                <p>Mes coordonnées</p>
+                <textarea readonly id='offer' class="form-control" width="100%"></textarea>
+                <video id="vid-in" controls width="100%" height="300px"></video>
+            </div>
+
+            <div class="col-sm-6">
+                OUT
+                <video id="vid-out" controls ></video>
+                <form id="incoming">
+                    <div class="form-group">
+                        <textarea class="form-control"></textarea>
+                    </div>
+                    <p>
+                        <a id="receive" href="#" class="btn btn-default">Recevoir</a>
+                    </p>
+                    <p>
+                        <button type="submit" style="display: none">Enregistrer l'offre</button>
+                    </p>
+
+                </form>
+            </div>
+
         </div>
-
-        <div class="col-sm-6">
-            OUT
-            <video id="vid-out" controls width="100%" height="300px"></video>
-            <form id="incoming" >
-                <div class="form-group">
-                    <textarea class="form-control"></textarea>
-                </div>
-                <p>
-                    <a id="receive" href="#" class="btn btn-default" >Recevoir</a>
-                </p>
-                <p>
-                    <button type="submit" style="display: none">Enregistrer l'offre</button>
-                </p>
-
-            </form>
-        </div>
-
     </div>
 </div>
 
@@ -104,6 +115,10 @@
             function failStartVideo(err) {
                 console.log(err.name + ": " + err.message);
             }
+
+            document.querySelector('#help').style.display = 'none'
+            document.querySelector('#main').style.display = 'block'
+
 
             let constraints = {audio: false, video: true};
             navigator.mediaDevices.getUserMedia(constraints).then(couldStartVideo).catch(failStartVideo)
