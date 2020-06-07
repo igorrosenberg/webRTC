@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8"/>
+    <title>PubNub JavaScript SDK QuickStart</title>
+</head>
+
+<body>
+<div>
+    <strong>Earth:</strong> <input id="update-text" type="input" placeholder="enter update for Earth here"/>
+    <input id="publish-button" type="submit" value="Submit Update to The Guide"/>
+    <p><strong>Updates</strong></p>
+    <div id="messages-top"/>
+</div>
+</body>
+
+<script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.27.4.min.js"></script>
+
+<script>
+    var pub_key = 'pub-c-f338e71f-c02f-406c-ae18-1808f11f05b2';
+    var sub_key = 'sub-c-17d18004-7cd4-11ea-9770-0a12e0cf0d6e';
+
+    const messagesTop = document.getElementById('messages-top');
+    const updateText = document.getElementById('update-text');
+    const sendButton = document.getElementById('publish-button');
+    sendButton.addEventListener('click', () => {submitUpdate(theEntry, updateText.value) }) ;
+
+    const clientUUID = PubNub.generateUUID();
+    const theChannel = 'the_guide';
+    const theEntry = 'Earth';
+
+    const pubnub = new PubNub({
+        // replace the following with your own publish and subscribe keys
+        publishKey: pub_key,
+        subscribeKey: sub_key,
+        uuid: clientUUID
+    });
+
+    pubnub.addListener({
+        message: function (event) {
+            displayMessage('[MESSAGE: received]',
+                event.message.entry + ': ' + event.message.update);
+        },
+        presence: function (event) {
+            displayMessage('[PRESENCE: ' + event.action + ']',
+                'uuid: ' + event.uuid + ', channel: ' + event.channel);
+        },
+        status: function (event) {
+            displayMessage('[STATUS: ' + event.category + ']',
+                'connected to channels: ' + event.affectedChannels);
+
+            if (event.category == 'PNConnectedCategory') {
+                //  On connection, we might want to send a first message
+                //submitUpdate(theEntry, 'Harmless.');
+            }
+        }
+    });
+
+    pubnub.subscribe({
+        channels: ['the_guide'],
+        withPresence: true
+    });
+
+    let submitUpdate = function (anEntry, anUpdate) {
+        pubnub.publish({
+                channel: theChannel,
+                message: {'entry': anEntry, 'update': anUpdate}
+            },
+            function (status, response) {
+                if (status.error) {
+                    console.log(status)
+                } else {
+                    //  1. On sending a message correctly, we might want to inform the sender of this success
+                    // displayMessage('[PUBLISH: sent]', 'timetoken: ' + response.timetoken);
+                    // 2. In this chat app, we're clearing the input zone... which is a terribly dangerous thing to do so late in the exchange
+                    updateText.value = "";
+                }
+            });
+    };
+
+    let displayMessage = function (messageType, aMessage) {
+        let pmessage = document.createElement('p');
+        messagesTop.after(pmessage);
+        pmessage.appendChild(document.createTextNode(messageType));
+        pmessage.appendChild(document.createTextNode(' '));
+        pmessage.appendChild(document.createTextNode(aMessage));
+    }
+
+</script>
+</html>
