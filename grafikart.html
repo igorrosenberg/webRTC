@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <title>Web RTC</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <style>
+    </style>
+</head>
+<body>
+
+<p>References :</p>
+<ul>
+    <li>https://github.com/feross/simple-peer</li>
+    <li>https://www.grafikart.fr/tutoriels/webrtc-864</li>
+</ul>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-6">
+            IN
+            <video id="vid-in" controls width="100%" height="300px"></video>
+            <textarea id='offer' class="form-control"></textarea>
+            <p>
+                <button id="start" class="btn btn-primary">Start</button>
+            </p>
+        </div>
+
+        <div class="col-sm-6">
+            OUT
+            <video id="vid-out" controls width="100%" height="300px"></video>
+            <form id="incoming" >
+                <div class="form-group">
+                    <textarea class="form-control"></textarea>
+                </div>
+                <p>
+                    <a id="receive" href="#" class="btn btn-default" >Recevoir</a>
+                </p>
+                <p>
+                    <button type="submit" style="display: none">Enregistrer l'offre</button>
+                </p>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+
+</body>
+
+<script src="simplepeer.min.js"></script>
+<script>
+
+    function bindEvents(p) {
+
+        p.on('error', function (error) {
+            console.log(error)
+        })
+
+        p.on('signal', function (data) {
+            document.querySelector('#offer').textContent = JSON.stringify(data)
+        })
+
+        p.on('stream', function (stream) {
+            let $video = document.getElementById('vid-in');
+            $video.srcObject = stream;
+            $video.onloadedmetadata = function (e) {
+                $video.play();
+            }
+        })
+
+        document.querySelector('#incoming button').style.display = 'block'
+        document.querySelector('#incoming').addEventListener('submit', friendData(p))
+        console.log("Events bound, form activated")
+    }
+
+    function start(isInitiator) {
+        return function () {
+
+            function couldStartVideo(mediaStream) {
+
+                let p = new SimplePeer({
+                    initiator: isInitiator,
+                    stream: mediaStream,
+                    trickle: false,
+                    // config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }] }
+                })
+                bindEvents(p)
+
+                let $video = document.getElementById('vid-out');
+                $video.srcObject = mediaStream;
+                $video.onloadedmetadata = function (e) {
+                    $video.play();
+                }
+            }
+
+            function failStartVideo(err) {
+                console.log(err.name + ": " + err.message);
+            }
+
+            let constraints = {audio: false, video: true};
+            navigator.mediaDevices.getUserMedia(constraints).then(couldStartVideo).catch(failStartVideo)
+
+            console.log("Started self-video on out ")
+        }
+
+    }
+
+
+    function friendData(p) {
+        return function (e) {
+            e.preventDefault()
+            let friendDataX = JSON.parse(e.target.querySelector('textarea').value)
+            p.signal(friendDataX)
+        }
+    }
+
+
+    document.querySelector('#start').addEventListener('click', start(true))
+    document.querySelector('#receive').addEventListener('click', start(false))
+
+</script>
+</html>
