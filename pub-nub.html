@@ -17,63 +17,11 @@
 <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.27.4.min.js"></script>
 
 <script>
-    const pub_key = 'pub-c-f338e71f-c02f-406c-ae18-1808f11f05b2'
-    const sub_key = 'sub-c-17d18004-7cd4-11ea-9770-0a12e0cf0d6e'
 
+    // GUI stuff
     const messagesTop = document.getElementById('messages-top')
     const updateText = document.getElementById('update-text')
     const sendButton = document.getElementById('publish-button')
-    sendButton.addEventListener('click', () => {
-        submitUpdate(subChannel, updateText.value)
-    })
-
-    const clientUUID = PubNub.generateUUID()
-    const theChannel = 'the_guide'
-    const subChannel = 'subChannel'
-
-    const pubnub = new PubNub({
-        publishKey: pub_key,
-        subscribeKey: sub_key,
-        uuid: clientUUID
-    })
-
-    pubnub.addListener({
-        message: function (event) {
-            displayMessage('[MESSAGE: received] ' + event.message.entry + ': ' + event.message.update)
-        },
-        presence: function (event) {
-            displayMessage('[PRESENCE: ' + event.action + '] ' + 'uuid: ' + event.uuid + ', channel: ' + event.channel)
-        },
-        status: function (event) {
-            displayMessage('[STATUS: ' + event.category + '] ' + 'connected to channels: ' + event.affectedChannels)
-
-            if (event.category == 'PNConnectedCategory') {
-                //  On connection, we might want to send a first message
-                //submitUpdate(theEntry, 'Harmless.')
-            }
-        }
-    })
-
-    pubnub.subscribe({
-        channels: [theChannel],
-        withPresence: true
-    })
-
-    let submitUpdate = function (anEntry, anUpdate) {
-        updateText.value = ""
-        pubnub.publish({
-                channel: theChannel,
-                message: {'entry': anEntry, 'update': anUpdate}
-            },
-            function (status, response) {
-                if (status.error) {
-                    displayMessage('[ERROR] ' + status)
-                } else {
-                    //  1. On sending a message correctly, we might want to inform the sender of this success
-                    // displayMessage('[PUBLISH: sent]', 'timetoken: ' + response.timetoken)
-                }
-            })
-    }
 
     let displayMessage = function (message) {
         let pmessage = document.createElement('p')
@@ -81,5 +29,67 @@
         messagesTop.after(pmessage)
     }
 
+    // Configure Comms
+    function koCallBack(error) {
+        displayMessage('ERROR: ' + error)
+    }
+
+    function onMessageCallback(a, b) {
+        displayMessage('[MESSAGE: received] ' + a + ': ' + b)
+    }
+
+    var myComms = COMMS(onMessageCallback, koCallBack)
+
+    // Gui Behavior
+
+    sendButton.addEventListener('click', function(e) {
+        myComms.send(updateText.value)
+        updateText.value = ""
+    })
+
+    /////////////
+
+    // An object with only one function : send(String)
+    function COMMS(onMessageCallback, koCallBack) {
+        const pub_key = 'pub-c-f338e71f-c02f-406c-ae18-1808f11f05b2'
+        const sub_key = 'sub-c-17d18004-7cd4-11ea-9770-0a12e0cf0d6e'
+
+
+        const clientUUID = PubNub.generateUUID()
+        const theChannel = 'the_guide'
+        const subChannel = 'subChannel'
+
+        const pubnub = new PubNub({
+            publishKey: pub_key,
+            subscribeKey: sub_key,
+            uuid: clientUUID
+        })
+
+        pubnub.addListener({
+            message: function (event) {
+                onMessageCallback(event.message.entry, event.message.update)
+            }
+        })
+
+        pubnub.subscribe({
+            channels: [theChannel],
+            withPresence: true
+        })
+
+        return {
+            send: function (anUpdate) {
+                const anEntry = subChannel
+                pubnub.publish({
+                        channel: theChannel,
+                        message: {'entry': anEntry, 'update': anUpdate}
+                    },
+                    function (status, response) {
+                        if (status.error) {
+                            koCallBack(status)
+                        }
+                    })
+            }
+        }
+    }
 </script>
 </html>
