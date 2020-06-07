@@ -1,6 +1,13 @@
 # Web RTC
 
-Live version via GitHub Pages : https://igorrosenberg.github.io/webRTC/index.html
+Live versions via GitHub Pages:
+
+- [Earliest demo from grafikart](https://igorrosenberg.github.io/webRTC/grafikart.html)
+- [Student](https://igorrosenberg.github.io/webRTC/a_student.html) and [teacher](https://igorrosenberg.github.io/webRTC/a_teacher.html) demo : imbalanced roles
+  - (todo) Focus on portrait mode : higher than wide
+  - (todo) Set Peer camera to fullscreen
+  - (todo) Set self camera to resonable size
+  - (todo) Add buttons for the teacher: remote actions   
 
 ## getUserMedia
 
@@ -66,9 +73,9 @@ Nice functions :
  - stream.oninactive
  
  
-## Other references
+## Some more references
  
 - https://www.instructables.com/id/WebRTC-Video-Chat-in-20-Lines-of-JavaScript/
--  https://www.grafikart.fr/tutoriels/webrtc-864
+- https://www.grafikart.fr/tutoriels/webrtc-864
  
  
