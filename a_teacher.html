@@ -80,6 +80,9 @@
             let $video = document.getElementById('vid-in');
             $video.srcObject = stream;
             $video.onloadedmetadata = function (e) {
+                // hide waitingRoom ... somehow when OK
+                document.getElementById('waitingRoom').style.display = 'none'
+
                 // show peer video
                 $video.style.display = 'block'
                 $video.play();
@@ -104,11 +107,13 @@
         }
     }
 
+    let p = null
+
     function start(isInitiator, incomingData) {
 
         function couldStartVideo(mediaStream) {
 
-            let p = new SimplePeer({
+            p = new SimplePeer({
                 initiator: isInitiator,
                 stream: mediaStream,
                 trickle: false,
@@ -119,9 +124,6 @@
             let $video = document.getElementById('vid-out');
             $video.srcObject = mediaStream;
             $video.onloadedmetadata = function (e) {
-                // hide waitingRoom ... somehow when OK
-                document.getElementById('waitingRoom').style.display = 'none'
-
                 // show self video
                 $video.style.display = 'block'
                 $video.play();
