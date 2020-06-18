@@ -5,12 +5,15 @@ Live versions via GitHub Pages:
 - [Earliest demo from grafikart](https://igorrosenberg.github.io/webRTC/grafikart.html)
 - [Student](https://igorrosenberg.github.io/webRTC/a_student.html) and [teacher](https://igorrosenberg.github.io/webRTC/a_teacher.html) demo : imbalanced roles
   - (todo) When student joins before the teacher
-  - (todo) Debug mode : make the messages available
+  - (todo) Debug mode : make the messages availableonly through url param (see `div#messages`)
   - (todo) Focus on portrait mode : higher than wide
   - (todo) Set Peer camera to fullscreen
   - (todo) Set self camera to resonable size
   - (todo) Add buttons for the teacher: remote actions   
   - (todo) code re-use ?    
+  - (todo) 1.2.3.4 progession of the setup    
+  - (todo) sound back on  (`let constraints = {audio: false, video: true}`)    
+  - (todo) merge teacher/student     
 
 ## getUserMedia
 

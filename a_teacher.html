@@ -36,8 +36,6 @@
     <h1>TEACHER</h1>
     <div class="row">
         <div class="col-sm-12" id="waitingRoom">
-            <p>Waiting for student</p>
-            <img src="images/spinner.gif">
             <div id="messages"></div>
         </div>
     </div>
@@ -52,12 +50,13 @@
 <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.27.4.min.js"></script>
 <script src="pubNubWrapper.js"></script>
 <script>
-
-    const teacherIn = 'TEACHER IN'
-    const studentIn = 'STUDENT IN'
+    // A. GUI interaction and comms
     const messagesTop = document.getElementById('messages')
 
-    // look for the student
+    function error(error) {
+        displayMessage('[ERROR] ' + error)
+    }
+
     let displayMessage = function (message) {
         let pmessage = document.createElement('p')
         pmessage.appendChild(document.createTextNode(message))
@@ -68,77 +67,54 @@
             console.log(message.substring(0, 99) + '...')
     }
 
-    // Configure Comms
-    function koCallBack(error) {
-        displayMessage('[ERROR] ' + error)
-    }
-
-    function onMessageCallback(a, b) {
-        displayMessage('[MESSAGE received] ' + a + ': ' + b)
-        if (a == 'student') {
-            if (b == studentIn)
-                startTeacherClass()
-            else
-                includeStudent(b)
-        }
-
-    }
-
-    const myComms = PubNubWrapper('1', 'teacher', onMessageCallback, koCallBack)
-
-    myComms.send(teacherIn)
-
 </script>
 <script>
+    // B. WebRTC video chat
+
     // https://www.grafikart.fr/tutoriels/webrtc-864
     // https://github.com/feross/simple-peer
 
+    function bindEvents(p, incomingData) {
 
-    function bindEvents() {
-
-        function error(error) {
-            console.log(error)
+        function streamToVideoElement(stream) {
+            let $video = document.getElementById('vid-in');
+            $video.srcObject = stream;
+            $video.onloadedmetadata = function (e) {
+                // show peer video
+                $video.style.display = 'block'
+                $video.play();
+            }
         }
 
         function linkConfig(data) {
             const dataJson = JSON.stringify(data)
-            console.log("Sending teacher dataJson")
+            displayMessage("Sending to peer my details")
             // JSON sent to the other party
             myComms.send(dataJson)
         }
 
-        function streamToVideoElement (stream) {
-            console.log('streamToVideoElement!')
-                let $video = document.getElementById('vid-in');
-                $video.srcObject = stream;
-                $video.onloadedmetadata = function (e) {
-                    console.log('show peer video!')
-                    // show peer video
-                    $video.style.display = 'block'
-                    $video.play();
-            }
-        }
-
         p.on('error', error)
-        p.on('signal', linkConfig)  // My own data is known
         p.on('stream', streamToVideoElement)    // A stream is grabbed
+        p.on('signal', linkConfig)  // My own data is known
 
-        // friendData(p, data)   --> must be called when StudentJSON is received back through myComms
+        // convert the incoming peer data to create a peer stream
+        if (incomingData != undefined) {
+            let parsedIncomingData = JSON.parse(incomingData)
+            p.signal(parsedIncomingData)
+        }
     }
 
-    let p = null
-
-    function start(isInitiator) {
+    function start(isInitiator, incomingData) {
 
         function couldStartVideo(mediaStream) {
 
-            p = new SimplePeer({
+            let p = new SimplePeer({
                 initiator: isInitiator,
                 stream: mediaStream,
                 trickle: false,
                 // config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }] }
             })
-            bindEvents(p)
+            bindEvents(p, incomingData)
 
             let $video = document.getElementById('vid-out');
             $video.srcObject = mediaStream;
@@ -153,30 +129,50 @@
         }
 
         function failStartVideo(err) {
-            console.log(err.name + ": " + err.message);
+            error(err.name + ": " + err.message);
         }
 
         let constraints = {audio: false, video: true};
         navigator.mediaDevices.getUserMedia(constraints).then(couldStartVideo).catch(failStartVideo)
 
-        console.log("Started self-video on out", isInitiator)
+        displayMessage("Started self-video on out", isInitiator)
 
     }
 
-    function startTeacherClass() {
-        start(true)
-    }
+</script>
+<script>
+    // C. bring it all together : workflow
 
     let studentCount = 0
 
     function includeStudent(studentData) {
-            let friendDataX = JSON.parse(studentData)
-        console.log ('includeStudent for renegotiate=' + friendDataX.renegotiate);
+        let friendDataX = JSON.parse(studentData)
+        displayMessage('includeStudent, renegotiate=' + friendDataX.renegotiate);
         if (friendDataX.renegotiate != true && studentCount++ == 0) {
-            console.log ('signaled!');
+            displayMessage('signaled!');
             p.signal(friendDataX)
         }
     }
 
+    const teacherIn = 'TEACHER IN'
+    const studentIn = 'STUDENT IN'
+
+    function onMessageCallback(a, b) {
+        displayMessage('[MESSAGE received] ' + a + ': ' + b)
+        if (a == 'student') {
+            if (b == studentIn) {
+                // startTeacherClass
+                start(true)
+            } else {
+                includeStudent(b)
+            }
+        }
+    }
+
+    const myComms = PubNubWrapper('1', 'teacher', onMessageCallback, error)
+
+    myComms.send(teacherIn)
+
 </script>
+
 </html>

@@ -52,12 +52,13 @@
 <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.27.4.min.js"></script>
 <script src="pubNubWrapper.js"></script>
 <script>
-
-    const teacherIn = 'TEACHER IN'
-    const studentIn = 'STUDENT IN'
+    // A. GUI interaction
     const messagesTop = document.getElementById('messages')
 
-    // look for the teacher
+    function error(error) {
+        displayMessage('[ERROR] ' + error)
+    }
+
     let displayMessage = function (message) {
         let pmessage = document.createElement('p')
         pmessage.appendChild(document.createTextNode(message))
@@ -68,22 +69,6 @@
             console.log(message.substring(0,99) + '...')
     }
 
-    // Configure Comms
-    function koCallBack(error) {
-        displayMessage('[ERROR] ' + error)
-    }
-
-    function onMessageCallback(a, b) {
-        displayMessage('[MESSAGE received] ' + a + ': ' + b)
-        if (a == 'teacher') {
-            startStudentClass(b)
-        }
-
-    }
-
-    const myComms = PubNubWrapper('1', 'student', onMessageCallback, koCallBack)
-
-    myComms.send(studentIn)
 
 </script>
 <script>
@@ -91,43 +76,37 @@
     // https://github.com/feross/simple-peer
 
 
-    function bindEvents(p, teacherData) {
+    function bindEvents(p, incomingData) {
 
-
-        function error(error) {
-            console.log(error)
+        function streamToVideoElement(stream) {
+            let $video = document.getElementById('vid-in');
+            $video.srcObject = stream;
+            $video.onloadedmetadata = function (e) {
+                // show peer video
+                $video.style.display = 'block'
+                $video.play();
+            }
         }
 
         function linkConfig(data) {
             const dataJson = JSON.stringify(data)
-            console.log("Sending back the student dataJson")
+            displayMessage("Sending to peer my details")
             // JSON sent to the other party
             myComms.send(dataJson)
         }
 
-        let streamToVideoElement = function () {
-            return function (stream) {
-                let $video = document.getElementById('vid-in');
-                $video.srcObject = stream;
-                $video.onloadedmetadata = function (e) {
-                    $video.style.display = 'block'
-                    $video.play();
-                }
-            }
-        }
-
         p.on('error', error)
-        p.on('signal', linkConfig)
-        p.on('stream', streamToVideoElement())
+        p.on('stream', streamToVideoElement)   // A stream is grabbed
+        p.on('signal', linkConfig) // My own data is known
 
-        console.log("Events bound, form activated")
-
-        // use the teacherData for the incoming stream
-        let friendDataX = JSON.parse(teacherData)
-        p.signal(friendDataX)
+        // convert the incoming peer data to create a peer stream
+        if (incomingData != undefined) {
+            let parsedIncomingData = JSON.parse(incomingData)
+            p.signal(parsedIncomingData)
+        }
     }
 
-    function start(isInitiator, teacherData) {
+    function start(isInitiator, incomingData) {
 
         function couldStartVideo(mediaStream) {
 
@@ -137,7 +116,7 @@
                 trickle: false,
                 // config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }] }
             })
-            bindEvents(p, teacherData)
+            bindEvents(p, incomingData)
 
             let $video = document.getElementById('vid-out');
             $video.srcObject = mediaStream;
@@ -152,20 +131,36 @@
         }
 
         function failStartVideo(err) {
-            console.log(err.name + ": " + err.message);
+            error(err.name + ": " + err.message);
         }
 
         let constraints = {audio: false, video: true};
         navigator.mediaDevices.getUserMedia(constraints).then(couldStartVideo).catch(failStartVideo)
 
-        console.log("Started self-video on out", isInitiator)
+        displayMessage("Started self-video on out", isInitiator)
 
     }
 
 
-    function startStudentClass(teacherData) {
-        start(false, teacherData)
+</script>
+<script>
+    // C. bring it all together : workflow
+
+    const teacherIn = 'TEACHER IN'
+    const studentIn = 'STUDENT IN'
+
+    // Configure Comms
+    function onMessageCallback(a, b) {
+        displayMessage('[MESSAGE received] ' + a + ': ' + b)
+        if (a == 'teacher') {
+            // startStudentClass
+            start(false, b)
+        }
+
     }
 
+    const myComms = PubNubWrapper('1', 'student', onMessageCallback, error)
+
+    myComms.send(studentIn)
 </script>
 </html>
