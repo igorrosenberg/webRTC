@@ -79,7 +79,7 @@
     // https://github.com/feross/simple-peer
 
 
-    function bindEvents(p, incomingData, sendMyDataClosure) {
+    function bindEvents(p, sendMyDataClosure) {
 
         function streamToVideoElement(stream) {
             let $video = document.getElementById('vid-in')
@@ -104,16 +104,11 @@
         p.on('stream', streamToVideoElement)   // A stream is grabbed
         p.on('signal', linkConfig) // My own data is known
 
-        // convert the incoming peer data to create a peer stream
-        if (incomingData != undefined) {
-            let parsedIncomingData = JSON.parse(incomingData)
-            p.signal(parsedIncomingData)
-        }
     }
 
     let p = null
 
-    function start(isInitiator, incomingData, sendMyDataClosure) {
+    function start(isInitiator, sendMyDataClosure) {
 
         function couldStartVideo(mediaStream) {
 
@@ -123,7 +118,7 @@
                 trickle: false,
                 // config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }] }
             })
-            bindEvents(p, incomingData, sendMyDataClosure)
+            bindEvents(p, sendMyDataClosure)
 
             let $video = document.getElementById('vid-out')
             $video.srcObject = mediaStream
@@ -165,7 +160,8 @@
 
     // Configure Comms
 
-    let myComms ;
+    let myComms;
+
     function sendMyDataClosure(dataJson) {
         displayMessage("Sending to peer my details")
         myComms.send(dataJson)
@@ -189,6 +185,7 @@
 
     let myData;
     let hisData;
+
     function sayStarted(data) {
         displayMessage('Started on my side, my data:' + data)
         myData = data
@@ -199,20 +196,20 @@
         document.getElementsByTagName('h1')[0].textContent = "Teacher"
         myComms = PubNubWrapper('1', 'teacher', onMessageCallback('teacher'), error)
         // startTeacherClass
-        start(true, undefined, sayStarted) // sendMyDataClosure
+        start(true, sayStarted) // sendMyDataClosure
         displayMessage('Waiting for student')
     } else {
         document.getElementsByTagName('h1')[0].textContent = "Student"
         myComms = PubNubWrapper('1', 'student', onMessageCallback('student'), error)
         // startStudentClass
-        start(false, b, sayStarted)
+        start(false, sayStarted)
         displayMessage('Waiting for teacher')
     }
 
     broadCast()
 
-    function broadCast(){
-        if (myData == undefined){
+    function broadCast() {
+        if (myData == undefined) {
             displayMessage('[broadCast] my missing')
             setTimeout(broadCast, 1000)
         } else {
