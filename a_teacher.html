@@ -50,15 +50,18 @@
 <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.27.4.min.js"></script>
 <script src="pubNubWrapper.js"></script>
 <script>
-    // A. GUI interaction and comms
+    // A. GUI interaction
     const messagesTop = document.getElementById('messages')
 
     function error(error) {
-        displayMessage('[ERROR] ' + error)
+        displayMessage(error, 'danger')
     }
 
-    let displayMessage = function (message) {
-        let pmessage = document.createElement('p')
+    let displayMessage = function (message, level = 'success') {
+
+        let pmessage = document.createElement('div')
+        pmessage.className = "alert alert-" + level
+        pmessage.setAttribute("role", "alert")
         pmessage.appendChild(document.createTextNode(message))
         messagesTop.append(pmessage)
         if (message.length < 100)
@@ -137,7 +140,7 @@
         let constraints = {audio: false, video: true};
         navigator.mediaDevices.getUserMedia(constraints).then(couldStartVideo).catch(failStartVideo)
 
-        displayMessage("Started self-video on out", isInitiator)
+        displayMessage("Started self-video on out")
 
     }
 
@@ -160,16 +163,16 @@
     const studentIn = 'STUDENT IN'
 
     function onMessageCallback(a, b) {
-        displayMessage('[MESSAGE received] ' + a + ': ' + b)
+            displayMessage('[MESSAGE received] ' + a + ': ' + b)
         if (a == 'student') {
-            if (b == studentIn) {
-                // startTeacherClass
-                start(true)
-            } else {
-                includeStudent(b)
+                if (b == studentIn) {
+                    // startTeacherClass
+                    start(true)
+                } else {
+                    includeStudent(b)
+                }
             }
         }
-    }
 
     const myComms = PubNubWrapper('1', 'teacher', onMessageCallback, error)
 

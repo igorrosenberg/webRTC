@@ -56,19 +56,21 @@
     const messagesTop = document.getElementById('messages')
 
     function error(error) {
-        displayMessage('[ERROR] ' + error)
+        displayMessage(error, 'danger')
     }
 
-    let displayMessage = function (message) {
-        let pmessage = document.createElement('p')
+    let displayMessage = function (message, level = 'success') {
+
+        let pmessage = document.createElement('div')
+        pmessage.className = "alert alert-" + level
+        pmessage.setAttribute("role", "alert")
         pmessage.appendChild(document.createTextNode(message))
         messagesTop.append(pmessage)
         if (message.length < 100)
             console.log(message)
         else
-            console.log(message.substring(0,99) + '...')
+            console.log(message.substring(0, 99) + '...')
     }
-
 
 </script>
 <script>
@@ -139,7 +141,7 @@
         let constraints = {audio: false, video: true};
         navigator.mediaDevices.getUserMedia(constraints).then(couldStartVideo).catch(failStartVideo)
 
-        displayMessage("Started self-video on out", isInitiator)
+        displayMessage("Started self-video on out")
 
     }
 
