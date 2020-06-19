@@ -165,6 +165,7 @@
 
     // Configure Comms
 
+    let myComms ;
     function sendMyDataClosure(dataJson) {
         displayMessage("Sending to peer my details")
         myComms.send(dataJson)
@@ -193,12 +194,12 @@
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get('whoami') == 'teacher') {
         document.getElementsByTagName('h1')[0].textContent = "Teacher"
-        const myComms = PubNubWrapper('1', 'teacher', onMessageCallback('teacher'), error)
+        myComms = PubNubWrapper('1', 'teacher', onMessageCallback('teacher'), error)
         myComms.send(teacherIn)
         displayMessage('Waiting for student')
     } else {
         document.getElementsByTagName('h1')[0].textContent = "Student"
-        const myComms = PubNubWrapper('1', 'student', onMessageCallback('student'), error)
+        myComms = PubNubWrapper('1', 'student', onMessageCallback('student'), error)
         myComms.send(studentIn)
         displayMessage('Waiting for teacher')
     }
