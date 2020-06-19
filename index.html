@@ -202,7 +202,7 @@
         document.getElementsByTagName('h1')[0].textContent = "Student"
         myComms = PubNubWrapper('1', 'student', onMessageCallback('student'), error)
         // startStudentClass
-        start(false, sayStarted)
+        start(true, sayStarted)
         displayMessage('Waiting for teacher')
     }
 
