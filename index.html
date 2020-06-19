@@ -148,7 +148,7 @@
     function includeRemoteData(peerData) {
         let friendDataX = JSON.parse(peerData)
         displayMessage('includeRemoteData, renegotiate=' + friendDataX.renegotiate)
-        if (friendDataX.renegotiate != true && hisData == undefined) {
+        if (friendDataX.renegotiate != true && hisData == undefined && myData != undefined) {
             hisData = friendDataX
             displayMessage('signaled!')
             p.signal(friendDataX)
