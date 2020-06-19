@@ -2,8 +2,8 @@
 
 Live versions via GitHub Pages:
 
-- [Earliest demo from grafikart](https://igorrosenberg.github.io/webRTC/grafikart.html)
-- [Student](https://igorrosenberg.github.io/webRTC/a_student.html) and [teacher](https://igorrosenberg.github.io/webRTC/a_teacher.html) demo : imbalanced roles
+- ~~([Earliest demo from grafikart](https://igorrosenberg.github.io/webRTC/grafikart.html))~~
+- [Student](https://igorrosenberg.github.io/webRTC/index.html) and [teacher](https://igorrosenberg.github.io/webRTC/index.html?whoami=teacher) demo : imbalanced roles
   - ~~(todo) Debug mode : make the messages availableonly through url param (see `div#messages`)~~
   - ~~(todo) code re-use ?~~    
   - ~~(todo) 1.2.3.4 progession of the setup~~    
