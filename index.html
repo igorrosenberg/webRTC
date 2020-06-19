@@ -149,12 +149,12 @@
 <script>
     // C. bring it all together : workflow
 
-    let studentCount = 0
 
-    function includeStudent(studentData) {
-        let friendDataX = JSON.parse(studentData)
-        displayMessage('includeStudent, renegotiate=' + friendDataX.renegotiate)
-        if (friendDataX.renegotiate != true && studentCount++ == 0) {
+    function includeRemoteData(peerData) {
+        let friendDataX = JSON.parse(peerData)
+        displayMessage('includeRemoteData, renegotiate=' + friendDataX.renegotiate)
+        if (friendDataX.renegotiate != true && hisData == undefined) {
+            hisData = friendDataX
             displayMessage('signaled!')
             p.signal(friendDataX)
         }
@@ -176,14 +176,10 @@
             if (a != whoami) {
                 displayMessage('[MESSAGE received] ' + a + ': ' + b)
                 if (b == studentIn) {
-                    // startTeacherClass
-                    start(true, undefined, sendMyDataClosure)
                 } else if (b == teacherIn) {
-                    // startStudentClass
-                    start(false, b, sendMyDataClosure)
                 } else {
                     // must be json data from student
-                    includeStudent(b)
+                    includeRemoteData(b)
                 }
             } else {
                 console.log("[self-message] " + a + ': ' + b)
@@ -191,17 +187,43 @@
         }
     }
 
+    let myData;
+    let hisData;
+    function sayStarted(data) {
+        displayMessage('Started on my side, my data:' + data)
+        myData = data
+    }
+
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get('whoami') == 'teacher') {
         document.getElementsByTagName('h1')[0].textContent = "Teacher"
         myComms = PubNubWrapper('1', 'teacher', onMessageCallback('teacher'), error)
-        myComms.send(teacherIn)
+        // startTeacherClass
+        start(true, undefined, sayStarted) // sendMyDataClosure
         displayMessage('Waiting for student')
     } else {
         document.getElementsByTagName('h1')[0].textContent = "Student"
         myComms = PubNubWrapper('1', 'student', onMessageCallback('student'), error)
-        myComms.send(studentIn)
+        // startStudentClass
+        start(false, b, sayStarted)
         displayMessage('Waiting for teacher')
+    }
+
+    broadCast()
+
+    function broadCast(){
+        if (myData == undefined){
+            displayMessage('[broadCast] my missing')
+            setTimeout(broadCast, 1000)
+        } else {
+            sendMyDataClosure(myData)
+            if (hisData == undefined) {
+                displayMessage('[broadCast] his missing')
+                setTimeout(broadCast, 1000)
+            } else {
+                displayMessage('[stop broadCast] my+his')
+            }
+        }
     }
 
 </script>
